@@ -25,7 +25,7 @@ public class ImageResponse {
         return ImageResponse.builder()
                 .id(image.getId())
                 .originalFileName(image.getOriginalFileName())
-                .imageUrl("/uploads/" + image.getStoredFileName())
+                .imageUrl(image.getFilePath()) // S3 URL 직접 사용
                 .fileSize(image.getFileSize())
                 .uploadedAt(image.getUploadedAt())
                 .build();

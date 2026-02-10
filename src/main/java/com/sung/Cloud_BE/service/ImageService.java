@@ -1,5 +1,9 @@
 package com.sung.Cloud_BE.service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.sung.Cloud_BE.dto.ImageResponse;
 import com.sung.Cloud_BE.entity.Image;
 import com.sung.Cloud_BE.repository.ImageRepository;
@@ -10,10 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,37 +24,47 @@ import java.util.stream.Collectors;
 public class ImageService {
 
     private final ImageRepository imageRepository;
+    private final AmazonS3 amazonS3;
 
-    @Value("${file.upload-dir}")
-    private String uploadDir;
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucketName;
 
     /**
-     * 이미지 업로드
+     * 이미지 업로드 (S3)
      */
     @Transactional
     public ImageResponse uploadImage(MultipartFile file) throws IOException {
-        // 1. 업로드 디렉토리 생성 (없으면)
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        // 2. 고유한 파일명 생성 (UUID + 확장자)
+        // 1. 고유한 파일명 생성 (UUID + 확장자)
         String originalFileName = file.getOriginalFilename();
         String extension = originalFileName != null && originalFileName.contains(".")
                 ? originalFileName.substring(originalFileName.lastIndexOf("."))
                 : "";
         String storedFileName = UUID.randomUUID().toString() + extension;
 
-        // 3. 파일 저장
-        Path filePath = uploadPath.resolve(storedFileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        // 2. S3에 업로드할 메타데이터 설정
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(file.getContentType());
+        metadata.setContentLength(file.getSize());
 
-        // 4. DB에 메타데이터 저장
+        // 3. S3에 파일 업로드
+        try {
+            amazonS3.putObject(new PutObjectRequest(
+                    bucketName,
+                    storedFileName,
+                    file.getInputStream(),
+                    metadata).withCannedAcl(CannedAccessControlList.PublicRead)); // 공개 읽기 권한
+        } catch (IOException e) {
+            throw new IOException("S3 업로드 실패: " + e.getMessage());
+        }
+
+        // 4. S3 URL 생성
+        String s3Url = amazonS3.getUrl(bucketName, storedFileName).toString();
+
+        // 5. DB에 메타데이터 저장
         Image image = Image.builder()
                 .originalFileName(originalFileName)
                 .storedFileName(storedFileName)
-                .filePath(filePath.toString())
+                .filePath(s3Url)
                 .fileSize(file.getSize())
                 .build();
 
