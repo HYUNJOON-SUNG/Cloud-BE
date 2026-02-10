@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: Cloud-BE
+  
+  # MySQL 연결 설정 (AWS RDS)
+  datasource:
+    url: jdbc:mysql://your-rds-endpoint.ap-northeast-2.rds.amazonaws.com:3306/cloud_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&useSSL=true
+    username: admin
+    password: your-rds-password-here
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: validate  # 운영: validate 또는 none, 개발: update
+    show-sql: false       # 운영: false, 개발: true
+    properties:
+      hibernate:
+        format_sql: false
+  
+  # 파일 업로드 설정
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# 서버 포트
+server:
+  port: 8080
+
+# AWS S3 설정
+cloud:
+  aws:
+    s3:
+      bucket: your-s3-bucket-name  # S3 버킷 이름 입력
+    region:
+      static: ap-northeast-2        # AWS 리전 (서울)
+    credentials:
+      access-key: YOUR_AWS_ACCESS_KEY    # IAM 액세스 키
+      secret-key: YOUR_AWS_SECRET_KEY    # IAM 시크릿 키
+    stack:
+      auto: false
+
+# ========================================
+# 설정 방법:
+# 1. 이 파일을 application.yaml로 복사
+# 2. 아래 값들을 실제 값으로 변경
+#    - your-rds-endpoint.ap-northeast-2.rds.amazonaws.com
+#    - admin (RDS 마스터 사용자명)
+#    - your-rds-password-here
+#    - your-s3-bucket-name
+#    - YOUR_AWS_ACCESS_KEY
+#    - YOUR_AWS_SECRET_KEY
+# ========================================
