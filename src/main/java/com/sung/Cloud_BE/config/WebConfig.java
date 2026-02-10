@@ -18,7 +18,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("http://localhost:5173") // Vite 기본 포트
+                .allowedOrigins(
+                        "http://localhost:5173", // 로컬 개발 환경
+                        "http://cloud-practice.r-e.kr", // 프로덕션 (HTTP)
+                        "https://cloud-practice.r-e.kr" // 프로덕션 (HTTPS)
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
