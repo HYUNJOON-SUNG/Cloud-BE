@@ -1,7 +1,7 @@
 package com.sung.Cloud_BE.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
+
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.sung.Cloud_BE.dto.ImageResponse;
@@ -52,7 +52,7 @@ public class ImageService {
                     bucketName,
                     storedFileName,
                     file.getInputStream(),
-                    metadata).withCannedAcl(CannedAccessControlList.PublicRead)); // 공개 읽기 권한
+                    metadata));
         } catch (IOException e) {
             throw new IOException("S3 업로드 실패: " + e.getMessage());
         }
